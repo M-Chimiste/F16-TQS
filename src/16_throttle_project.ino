@@ -373,17 +373,29 @@ void loop() {
   int currentButton44State = !digitalRead(joyButton44);
   lastButton44State = setButtonState(currentButton44State, lastButton44State, 43);
 
+  
   int currentButton45State = !digitalRead(joyButton45);
-  lastButton45State = setButtonState(currentButton45State, lastButton45State, 44);
+  if (currentButton45State != lastButton45State){ // If different a pulse has happened
+    
+    if (!digitalRead(joyButton46) != currentButton45State) { 
+      Joystick.setButton(44, currentButton45State) // set button state for CW rotation
+      } else {
+        Joystick.setButton(45, currentButton45State) //set button state for CCW rotation
+      }
+  }
+  lastButton45State = currentButton45State
+  
+//   int currentButton45State = !digitalRead(joyButton45);
+//   lastButton45State = setButtonState(currentButton45State, lastButton45State, 44);
 
-  int currentButton46State = !digitalRead(joyButton46);
-  lastButton46State = setButtonState(currentButton46State, lastButton46State, 45);
+//   int currentButton46State = !digitalRead(joyButton46);
+//   lastButton46State = setButtonState(currentButton46State, lastButton46State, 45);
 
-  int currentButton47State = !digitalRead(joyButton47);
-  lastButton47State = setButtonState(currentButton47State, lastButton47State, 46);
+//   int currentButton47State = !digitalRead(joyButton47);
+//   lastButton47State = setButtonState(currentButton47State, lastButton47State, 46);
 
-  int currentButton48State = !digitalRead(joyButton48);
-  lastButton48State = setButtonState(currentButton48State, lastButton48State, 47);
+//   int currentButton48State = !digitalRead(joyButton48);
+//   lastButton48State = setButtonState(currentButton48State, lastButton48State, 47);
 
 
   // Set a small delay for debouncing
