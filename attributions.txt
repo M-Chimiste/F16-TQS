@@ -1,0 +1,6 @@
+The some of the STLs are derivative works.  This documents attempts to reference the original authors' work.
+
+F16 Throttle TQS: https://www.hempstick.org/The_Official_Hempstick_Site/Flight_Sim_3D_Models.html by Jonah Tsai
+4 Way Hats: https://www.thingiverse.com/thing:4189142 by Thingiverse user Thick8 
+Rack and Pinion System: https://www.thingiverse.com/thing:4397531 by Thingiverse user Vendeta44
+Keyboard Caps: https://www.thingiverse.com/thing:677556 by Thingiverse user tlegrone 
