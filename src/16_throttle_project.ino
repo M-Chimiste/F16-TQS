@@ -383,8 +383,18 @@ void loop() {
         Joystick.setButton(45, currentButton45State) //set button state for CCW rotation
       }
   }
-  lastButton45State = currentButton45State
+  lastButton4State = currentButton45State;
   
+  int currentButton47State = !digitalRead(joyButton47);
+  if (currentButton47State != lastButton47State){ // If different a pulse has happened
+    
+    if (!digitalRead(joyButton48) != currentButton47State) { 
+      Joystick.setButton(46, currentButton47State) // set button state for CW rotation
+      } else {
+        Joystick.setButton(47, currentButton47State) //set button state for CCW rotation
+      }
+  }
+  lastButton47State = currentButton47State;
 //   int currentButton45State = !digitalRead(joyButton45);
 //   lastButton45State = setButtonState(currentButton45State, lastButton45State, 44);
 
