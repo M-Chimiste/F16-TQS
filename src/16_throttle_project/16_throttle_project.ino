@@ -141,8 +141,8 @@ int lastButton48State = 0;
 
 Joystick_ Joystick(0x15, JOYSTICK_TYPE_JOYSTICK, 48, 0, true, true, true, false, false, true, false, true, true, false, false);
 
-const bool initAutoSendState = true;
-const int smoothing = 255;
+const bool initAutoSendState = false;
+const int smoothing = 512;
 
 
 int setButtonState(int currentButtonState, int previousButtonState, int button){
@@ -409,6 +409,7 @@ void loop() {
 
 
   // Set a small delay for debouncing
+  Joystick.sendState();
   delay(20);
  
 
