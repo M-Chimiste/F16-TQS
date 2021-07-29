@@ -1,3 +1,7 @@
+// Author: Christian Merrill
+// Version: 0.2-dev
+// License: MIT 2.0
+
 
 #include <Wire.h>
 #include <Joystick.h>
