@@ -63,10 +63,10 @@ int rxAxis_ = 0;
 #define joyButton44 53
 
 // Define Rotary Encoders
-#define joyButton45 2
-#define joyButton46 3
-#define joyButton47 4
-#define joyButton48 5
+#define encoder1CLK 2
+#define encoder1DT 3
+#define encoder2CLK 4
+#define encoder2DT 5
 
 // Initalize button states with default value of 0
 int lastButton1State = 0;
@@ -113,10 +113,14 @@ int lastButton41State = 0;
 int lastButton42State = 0;
 int lastButton43State = 0;
 int lastButton44State = 0;
-int lastButton45State = 0;
-int lastButton46State = 0;
-int lastButton47State = 0;
-int lastButton48State = 0;
+
+volatile int lastEncodedRot1 = 0;
+volatile long encoder1Value = 0;
+volatile int lastEncodedRot2 = 0;
+volatile long encoder2Value = 0;
+const int encoderMax = 20;
+const int encoderMin = 0;
+
 
 
 // Initalize the Joystick Data Structure
@@ -139,7 +143,9 @@ int lastButton48State = 0;
 //Include Brake: Determines whether a Brake axis is avalible for used by the HID system, defined as a bool value (default:true)
 //Include Steering: Determines whether a Steering axis is avalible for used by the HID system, defined as a bool value (default:true)
 
-Joystick_ Joystick(0x15, JOYSTICK_TYPE_JOYSTICK, 48, 0, true, true, true, false, false, true, false, true, true, false, false);
+Joystick_ Joystick(0x15, JOYSTICK_TYPE_JOYSTICK, 44, 0, true, true, true, true, true, true, false, true, true, false, false);
+
+// Joystick_ Joystick(0x15, JOYSTICK_TYPE_JOYSTICK, 48, 0, true, true, true, false, false, true, false, true, true, false, false);
 
 const bool initAutoSendState = false;
 const int smoothing = 512;
@@ -207,13 +213,78 @@ void setup() {
   pinMode(joyButton43, INPUT_PULLUP);
   pinMode(joyButton44, INPUT_PULLUP);
   // Rotary Encoders Init
-  pinMode(joyButton45, INPUT_PULLUP);
-  pinMode(joyButton46, INPUT_PULLUP);
-  pinMode(joyButton47, INPUT_PULLUP);
-  pinMode(joyButton48, INPUT_PULLUP);
- 
+//  pinMode(joyButton45, INPUT_PULLUP);
+//  pinMode(joyButton46, INPUT_PULLUP);
+//  pinMode(joyButton47, INPUT_PULLUP);
+//  pinMode(joyButton48, INPUT_PULLUP);
+
+  pinMode(encoder1CLK, INPUT);
+  pinMode(encoder1DT, INPUT);
+  pinMode(encoder2CLK, INPUT);
+  pinMode(encoder2DT, INPUT);
+  
+  // Turn the pullup resistors on for the encoders
+  digitalWrite(encoder1CLK, HIGH);
+  digitalWrite(encoder1DT, HIGH);
+  digitalWrite(encoder2CLK, HIGH);
+  digitalWrite(encoder2DT, HIGH);
+
+  // Attach Interrupt
+  attachInterrupt(digitalPinToInterrupt(encoder1CLK), updateEncoder1, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(encoder2CLK), updateEncoder2, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(encoder1DT), updateEncoder1, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(encoder2DT), updateEncoder2, CHANGE);
+  
   //Start Joystick - Needed to start the Joystick function libary
   Joystick.begin();
+}
+
+
+// adapted from bildr article: http://bildr.org/2012/08/rotary-encoder-arduino/
+void updateEncoder1(){
+  int MSB = digitalRead(encoder1CLK); //MSB = most significant bit
+  int LSB = digitalRead(encoder1DT); //LSB = least significant bit
+
+  int encoded = (MSB << 1) |LSB; //converting the 2 pin value to single number
+  int sum = (lastEncodedRot1 << 2) | encoded; //adding it to the previous encoded value
+  if (sum == 0b1101 || sum == 0b0100 || sum == 0b0010 || sum == 0b1011){
+    encoder1Value ++;
+    if (encoder1Value >= encoderMax) {
+      encoder1Value = encoderMax;
+    }
+    
+  } 
+  if(sum == 0b1110 || sum == 0b0111 || sum == 0b0001 || sum == 0b1000) {
+    encoder1Value --;
+    if (encoder1Value <= encoderMin) {
+      encoder1Value = encoderMin;
+    }
+    lastEncodedRot1 = encoded; //store this value for next time 
+  }
+
+}
+
+void updateEncoder2(){
+  int MSB = digitalRead(encoder2CLK); //MSB = most significant bit
+  int LSB = digitalRead(encoder2DT); //LSB = least significant bit
+
+  int encoded = (MSB << 1) |LSB; //converting the 2 pin value to single number
+  int sum = (lastEncodedRot2 << 2) | encoded; //adding it to the previous encoded value
+  if (sum == 0b1101 || sum == 0b0100 || sum == 0b0010 || sum == 0b1011){
+    encoder2Value ++;
+    if (encoder2Value >= encoderMax) {
+      encoder2Value = encoderMax;
+    }
+    
+  } 
+  if(sum == 0b1110 || sum == 0b0111 || sum == 0b0001 || sum == 0b1000) {
+    encoder2Value --;
+    if (encoder2Value <= encoderMin) {
+      encoder2Value = encoderMin;
+    }
+    lastEncodedRot2 = encoded; //store this value for next time 
+  }
+
 }
 
 
@@ -239,6 +310,12 @@ void loop() {
   rxAxis_ = analogRead(joyRX);
   rxAxis_ = map(rxAxis_, 0, 1023, 0, smoothing);
   Joystick.setZAxis(rxAxis_);
+  
+  map(encoder1Value, encoderMin, encoderMax, 0, smoothing);
+  Joystick.setRxAxis(encoder1Value);
+  
+  map(encoder1Value, encoderMin, encoderMax, 0, smoothing);
+  Joystick.setRyAxis(encoder2Value);
 
   // Handle the buttons
   int currentButton1State = !digitalRead(joyButton1);
@@ -372,41 +449,6 @@ void loop() {
 
   int currentButton44State = !digitalRead(joyButton44);
   lastButton44State = setButtonState(currentButton44State, lastButton44State, 43);
-
-  
-  int currentButton45State = !digitalRead(joyButton45);
-  if (currentButton45State != lastButton45State){ // If different a pulse has happened
-    
-    if (!digitalRead(joyButton46) != currentButton45State) { 
-      Joystick.setButton(44, currentButton45State); // set button state for CW rotation
-      } else {
-        Joystick.setButton(45, currentButton45State); //set button state for CCW rotation
-      }
-  }
-  lastButton4State = currentButton45State;
-  
-  int currentButton47State = !digitalRead(joyButton47);
-  if (currentButton47State != lastButton47State){ // If different a pulse has happened
-    
-    if (!digitalRead(joyButton48) != currentButton47State) { 
-      Joystick.setButton(46, currentButton47State); // set button state for CW rotation
-      } else {
-        Joystick.setButton(47, currentButton47State); //set button state for CCW rotation
-      }
-  }
-  lastButton47State = currentButton47State;
-//   int currentButton45State = !digitalRead(joyButton45);
-//   lastButton45State = setButtonState(currentButton45State, lastButton45State, 44);
-
-//   int currentButton46State = !digitalRead(joyButton46);
-//   lastButton46State = setButtonState(currentButton46State, lastButton46State, 45);
-
-//   int currentButton47State = !digitalRead(joyButton47);
-//   lastButton47State = setButtonState(currentButton47State, lastButton47State, 46);
-
-//   int currentButton48State = !digitalRead(joyButton48);
-//   lastButton48State = setButtonState(currentButton48State, lastButton48State, 47);
-
 
   // Set a small delay for debouncing
   Joystick.sendState();
